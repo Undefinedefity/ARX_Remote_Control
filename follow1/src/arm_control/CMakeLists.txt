@@ -291,6 +291,8 @@ catkin_install_python(PROGRAMS scripts/sample.py
                               scripts/sample_ik_2_scene.py
                               scripts/sample_ik_3_prep.py
                               scripts/random_sample_ik_3_prep.py
+                              scripts/mid_depth_publish.py
+                              scripts/visualization.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

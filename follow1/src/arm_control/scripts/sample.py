@@ -27,10 +27,10 @@ global data_dict, step, Max_step, dataset_path
 
 # parameters
 step = 0
-Max_step = 100 #1000
+Max_step = 200 #1000
 # directory_path = f'/media/dc/CLEAR/xgxy/dataset20241213' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
 
-directory_path = f'/home/arxpro/Desktop/data/test' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
+directory_path = f'/home/arxpro/ARX_Remote_Control/data/5_12' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
 extension = '.zarr' 
 episode_idx = count_files_with_extension(directory_path, extension)
 dataset_path = f'{directory_path}/episode_{episode_idx}.zarr'
@@ -47,7 +47,7 @@ data_dict = {
 
 def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
     global data_dict, step, Max_step, dataset_path,video_path
-    
+    print(f"DEBUG:Enter Callback!")
     save=True
     bridge = CvBridge()
     image_mid = bridge.imgmsg_to_cv2(image_mid, "bgr8")
@@ -65,6 +65,7 @@ def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
         data_dict["/observations/images/mid"].append(image_mid)
         data_dict["/observations/images/right"].append(image_right)
         data_dict["/observations/depth"].append(depth)
+        print(f"[DEBUG] Saved")
 
     canvas = np.zeros((480, 1280, 3), dtype=np.uint8)
 
@@ -74,7 +75,6 @@ def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
     # canvas[:, 1280:, :] = image_right
     canvas[:, :640, :] = image_mid
     canvas[:, 640:1280, :] = image_right
-    canvas[:, 1280, :] = depth
 
     # 在一个窗口中显示排列后的图像
     cv2.imshow('Multi Camera Viewer', canvas)
@@ -116,13 +116,15 @@ def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
                             dtype='uint16',
                             chunks=(1, 480, 640))
         
-        obs.create_dataset('qpos', data=data_dict['qpos'])
-        root.create_dataset('action', data=data_dict['action'])
-        root.create_dataset('eef_qpos', data=data_dict['eef_qpos'])
+        obs.create_dataset('qpos', data=data_dict['/observations/qpos'])
+
+        root.create_dataset('action', data=data_dict['/action'])
+
+        root.create_dataset('eef_qpos', data=data_dict['/eef_qpos'])
         
         # 视频生成部分保持不变（直接从 data_dict 读取）
-        mid_images = data_dict['observations/images/mid']
-        right_images = data_dict['observations/images/right']
+        mid_images = data_dict['/observations/images/mid']
+        right_images = data_dict['/observations/images/right']
         images = np.concatenate([mid_images, right_images], axis=2)
         
         video_path = f'{video_path}video.mp4'
@@ -158,7 +160,8 @@ if __name__ =="__main__":
     # image_left = Subscriber("left_camera",Image)
     image_right = Subscriber("right_camera",Image)
     depth = Subscriber("mid_depth_camera",Image)
-    ats = ApproximateTimeSynchronizer([master1,follow1,follow1_pos,image_mid,image_right,depth],slop=0.03,queue_size=2)
+    ats = ApproximateTimeSynchronizer([master1,follow1,follow1_pos,image_mid,image_right,depth],slop=0.15,queue_size=40)
+    print(f"Hello")
     ats.registerCallback(callback)
     rospy.spin()
     
