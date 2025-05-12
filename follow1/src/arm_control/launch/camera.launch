@@ -4,5 +4,7 @@
     </node>
     <node pkg="arm_control" type="right_image_publish.py" name="right_camera_publisher" output="screen">
     </node>
+    <node pkg="arm_control" type="mid_depth_publish.py" name="mid_depth_camera_publisher" output="screen">
+    </node>
     
 </launch>
