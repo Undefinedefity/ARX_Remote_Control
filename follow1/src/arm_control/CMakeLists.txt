@@ -283,6 +283,7 @@ install(DIRECTORY
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 catkin_install_python(PROGRAMS scripts/sample.py
+                              scripts/sample2.py
                               scripts/sample_ik.py
                               scripts/mid_image_publish.py
                               scripts/left_image_publish.py
