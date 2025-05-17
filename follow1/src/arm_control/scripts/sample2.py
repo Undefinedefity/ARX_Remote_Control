@@ -70,7 +70,7 @@ def finalize_dataset(zarr_root, all_data):
         'images_mid': np.concatenate([ep['images_mid'] for ep in all_data]),
         'images_right': np.concatenate([ep['images_right'] for ep in all_data]),
         'depth': np.concatenate([ep['depth'] for ep in all_data])
-    }pip3 install open3d -i https://pypi.tuna.tsinghua.edu.cn/simple
+    }
 
     # 配置Zarr存储参数
     store_config = {
