@@ -13,40 +13,35 @@ from arm_control.msg import JointInformation
 from arm_control.msg import JointControl
 from arm_control.msg import PosCmd
 from sensor_msgs.msg import Image
-import os
+import copy
+from termcolor import cprint
 
-def count_files_with_extension(directory, extension):
-    count = 0
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if file.endswith(extension):
-                count += 1
-    return count
-
-global data_dict, step, Max_step, dataset_path 
+global data_dict, sub_step, step, Max_step, Max_episode, dataset_path,episode_ends_array,mid_image_array,right_image_array,depth_array,qpos_array,action_array,eef_qpos_array,episode_idx 
 
 # parameters
 step = 0
+sub_step = 0
+episode_idx = 0
 Max_step = 200 #1000
+Max_episode = 10
 # directory_path = f'/media/dc/CLEAR/xgxy/dataset20241213' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
 
-directory_path = f'/home/arxpro/ARX_Remote_Control/data/5_12' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
+directory_path = f'/home/arxpro/ARX_Remote_Control/data/5_18' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
 extension = '.zarr' 
-episode_idx = count_files_with_extension(directory_path, extension)
-dataset_path = f'{directory_path}/episode_{episode_idx}.zarr'
-video_path=f'{directory_path}/video/{episode_idx}'
+dataset_path = f'{directory_path}.zarr'
 data_dict = {
-        '/observations/qpos': [],
+        '/episode_ends' : [],
+        '/qpos': [],
         '/action': [],
         '/eef_qpos': [],
         '/observations/images/mid' : [],
         '/observations/images/right' : [],
         '/observations/depth' : [],
         }
-
+episode_ends_array,mid_image_array,right_image_array,depth_array,qpos_array,action_array,eef_qpos_array = [],[],[],[],[],[]
 
 def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
-    global data_dict, step, Max_step, dataset_path,video_path
+    global data_dict, step, Max_step,Max_episode, dataset_path
     print(f"DEBUG:Enter Callback!")
     save=True
     bridge = CvBridge()
@@ -59,12 +54,12 @@ def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
     # print("eef_qpos:", eef_qpos)
     # print("action:", action)
     if save:
-        data_dict["/eef_qpos"].append(eef_qpos)
-        data_dict["/action"].append(action)
-        data_dict["/observations/qpos"].append(qpos)
-        data_dict["/observations/images/mid"].append(image_mid)
-        data_dict["/observations/images/right"].append(image_right)
-        data_dict["/observations/depth"].append(depth)
+        eef_qpos_array.append(eef_qpos)
+        action_array.append(action)
+        qpos_array.append(qpos)
+        mid_image_array.append(image_mid)
+        right_image_array.append(image_right)
+        depth_array.append(depth)
         print(f"[DEBUG] Saved")
 
     canvas = np.zeros((480, 1280, 3), dtype=np.uint8)
@@ -81,65 +76,74 @@ def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
   
     cv2.waitKey(1)
 
-    step = step + 1
-    print(step)
-    if step >= Max_step and save:
-        print('end__________________________________')
+    sub_step = sub_step + 1
+    print(sub_step)
+    if sub_step >= Max_step and save:
+        print(f'Episode {episode_idx+1} end__________________________________')
+        step += sub_step
+        sub_step = 0
+        episode_idx = episode_idx + 1
+        data_dict["/episode_ends"].append(step)
+        data_dict["/eef_qpos"].extend(copy.deepcopy(eef_qpos_array))
+        data_dict["/action"].extend(copy.deepcopy(action_array))
+        data_dict["/qpos"].extend(copy.deepcopy(qpos_array))
+        data_dict["/observations/images/mid"].extend(copy.deepcopy(mid_image_array))
+        data_dict["/observations/images/right"].extend(copy.deepcopy(right_image_array))
+        data_dict["/observations/depth"].extend(copy.deepcopy(depth_array))
+        mid_image_array,right_image_array,depth_array,qpos_array,action_array,eef_qpos_array = [],[],[],[],[],[]
+
+    if episode_idx >= Max_episode and save:
+        # 保存数据到zarr文件
+        zarr_root = zarr.group(dataset_path)
+        zarr_data = zarr_root.create_group('data')
+        zarr_meta = zarr_root.create_group('meta')
+        # 转换数据格式
+        data_dict['/observations/images/mid'] = np.stack(data_dict['/observations/images/mid'], axis=0)
+        if data_dict['/observations/images/mid'].shape[1] == 3:  # 确保通道在最后
+            data_dict['/observations/images/mid'] = np.transpose(data_dict['/observations/images/mid'], (0,2,3,1))
+        data_dict['/observations/images/right'] = np.stack(data_dict['/observations/images/right'], axis=0)
+        if data_dict['/observations/images/right'].shape[1] == 3:  # 确保通道在最后
+            data_dict['/observations/images/right'] = np.transpose(data_dict['/observations/images/right'], (0,2,3,1))
+        data_dict['/observations/depth'] = np.stack(data_dict['/observations/depth'], axis=0)
+        data_dict['/eef_qpos'] = np.stack(data_dict['/eef_qpos'],axis=0)
+        data_dict['/qpos'] = np.stack(data_dict['/qpos'],axis=0)
+        data_dict['/action'] = np.stack(data_dict['/action'],axis=0)
+        data_dict['/episode_ends'] = np.array(data_dict['/episode_ends'])
+
+        # 设置压缩
+        compressor = zarr.Blosc(cname='zstd', clevel=3, shuffle=1)
         
-        # 创建 Zarr 存储（自动创建目录结构）
-        store = zarr.DirectoryStore(dataset_path)  # Zarr 使用目录存储
-        root = zarr.group(store=store, overwrite=True)
-        
-        # 设置属性
-        root.attrs['sim'] = True
-        
-        # 创建 observations 组
-        obs = root.create_group('observations')
-        image = obs.create_group('images')
+        # 设置chunk大小
+        mid_img_chunk_size = (50, data_dict['/observations/images/mid'].shape[1], data_dict['/observations/images/mid'].shape[2], data_dict['/observations/images/mid'].shape[3])
+        right_img_chunk_size = (50, data_dict['/observations/images/right'].shape[1], data_dict['/observations/images/right'].shape[2], data_dict['/observations/images/right'].shape[3])
+        depth_chunk_size = (50, data_dict['/observations/depth'].shape[1], data_dict['/observations/depth'].shape[2])
+        qpos_chunk_size = (50, data_dict['/qpos'].shape[1])
+        eef_qpos_chunk_size = (50, data_dict['/eef_qpos'].shape[1])
+        action_chunk_size = (50, data_dict['/action'].shape[1])
         
         # 创建数据集
-        image.create_dataset('mid', 
-                            data=data_dict['/observations/images/mid'],
-                            shape=(Max_step, 480, 640, 3),
-                            dtype='uint8',
-                            chunks=(1, 480, 640, 3))  # 保持相同分块
+        zarr_data.create_dataset('img_mid', data=data_dict['/observations/images/mid'], chunks=mid_img_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
+        zarr_data.create_dataset('img_right', data=data_dict['/observations/images/right'], chunks=right_img_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
+        zarr_data.create_dataset('depth', data=data_dict['/observations/depth'], chunks=depth_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
+        zarr_data.create_dataset('qpos', data=data_dict['/qpos'], chunks=qpos_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
+        zarr_data.create_dataset('eef_qpos', data=data_dict['/eef_qpos'], chunks=eef_qpos_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
+        zarr_data.create_dataset('action', data=data_dict['/action'], chunks=action_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
+        # 打印数据信息
+        cprint(f'-'*50, 'cyan')
+        cprint(f'mid img shape: {data_dict["/observations/images/mid"].shape}, range: [{np.min(data_dict["/observations/images/mid"])}, {np.max(data_dict["/observations/images/mid"])}]', 'green')
+        cprint(f'right img shape: {data_dict["/observations/images/right"].shape}, range: [{np.min(data_dict["/observations/images/right"])}, {np.max(data_dict["/observations/images/right"])}]', 'green') 
+        cprint(f'depth shape: {data_dict["/observations/depth"].shape}, range: [{np.min(data_dict["/observations/depth"])}, {np.max(data_dict["/observations/depth"])}]', 'green')
+        cprint(f'qpos shape: {data_dict["/qpos"].shape}, range: [{np.min(data_dict["/qpos"])}, {np.max(data_dict["/qpos"])}]', 'green')
+        cprint(f'eef_qpos shape: {data_dict["/eef_qpos"].shape}, range: [{np.min(data_dict["/eef_qpos"])}, {np.max(data_dict["/eef_qpos"])}]', 'green')
+        cprint(f'action shape: {data_dict["/action"].shape}, range: [{np.min(data_dict["/action"])}, {np.max(data_dict["/action"])}]', 'green')
+        cprint(f'保存zarr文件到 {dataset_path}', 'green')
         
-        image.create_dataset('right',
-                            data=data_dict['/observations/images/right'],
-                            shape=(Max_step, 480, 640, 3),
-                            dtype='uint8',
-                            chunks=(1, 480, 640, 3))
-        
-        obs.create_dataset('depth',
-                            data=data_dict['/observations/depth'],
-                            shape=(Max_step, 480, 640),
-                            dtype='uint16',
-                            chunks=(1, 480, 640))
-        
-        obs.create_dataset('qpos', data=data_dict['/observations/qpos'])
-
-        root.create_dataset('action', data=data_dict['/action'])
-
-        root.create_dataset('eef_qpos', data=data_dict['/eef_qpos'])
-        
-        # 视频生成部分保持不变（直接从 data_dict 读取）
-        mid_images = data_dict['/observations/images/mid']
-        right_images = data_dict['/observations/images/right']
-        images = np.concatenate([mid_images, right_images], axis=2)
-        
-        video_path = f'{video_path}video.mp4'
-        height, width, _ = images[0].shape
-        fps = 10
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        video_writer = cv2.VideoWriter(video_path, fourcc, fps, (width, height))
-        for img in images:
-            video_writer.write(img)
-        video_writer.release()
-        
+        # 清理内存
+        del data_dict
+        del zarr_root, zarr_data, zarr_meta
         print('end__________________________________')
         rospy.signal_shutdown("\n************************signal_shutdown********sample successfully!*************************************")
         quit("sample successfully!")
-        
 
 if __name__ =="__main__":
     #config my camera
