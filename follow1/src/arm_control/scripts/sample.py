@@ -120,6 +120,7 @@ def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
         qpos_chunk_size = (50, data_dict['/qpos'].shape[1])
         eef_qpos_chunk_size = (50, data_dict['/eef_qpos'].shape[1])
         action_chunk_size = (50, data_dict['/action'].shape[1])
+
         
         # 创建数据集
         zarr_data.create_dataset('img_mid', data=data_dict['/observations/images/mid'], chunks=mid_img_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
@@ -128,6 +129,8 @@ def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
         zarr_data.create_dataset('qpos', data=data_dict['/qpos'], chunks=qpos_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
         zarr_data.create_dataset('eef_qpos', data=data_dict['/eef_qpos'], chunks=eef_qpos_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
         zarr_data.create_dataset('action', data=data_dict['/action'], chunks=action_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
+        zarr_meta.create_dataset('episode_ends', data=data_dict['/episode_ends'], dtype='int64', overwrite=True, compressor=compressor)
+        
         # 打印数据信息
         cprint(f'-'*50, 'cyan')
         cprint(f'mid img shape: {data_dict["/observations/images/mid"].shape}, range: [{np.min(data_dict["/observations/images/mid"])}, {np.max(data_dict["/observations/images/mid"])}]', 'green')
