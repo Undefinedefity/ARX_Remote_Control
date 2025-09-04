@@ -14,7 +14,7 @@ from arm_control.msg import JointInformation, JointControl, PosCmd
 from sensor_msgs.msg import Image
 
 # 全局配置参数
-TOTAL_EPISODES = 40         # 需要采集的episode总数
+TOTAL_EPISODES = 20         # 需要采集的episode总数
 STEPS_PER_EPISODE = 150    # 每个episode的步长
 DATA_ROOT = '/home/arxpro/ARX_Remote_Control/data/multi_episodes'  # 数据存储根目录
 

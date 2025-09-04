@@ -37,7 +37,7 @@ def main():
 
 
     # 循环发布图像
-    rate = rospy.Rate(10)  # 设置发布频率为10Hz
+    # rate = rospy.Rate(10)  # 设置发布频率为10Hz
     while not rospy.is_shutdown():
         frames = Left_pipeline.wait_for_frames()
         color_frame = frames.get_color_frame()
@@ -50,7 +50,7 @@ def main():
         image_msg.header.stamp = rospy.Time.now()
         image_pub.publish(image_msg)
 
-        rate.sleep()
+        # rate.sleep()
 
     # 停止摄像头并关闭窗口
     Left_pipeline.stop() 

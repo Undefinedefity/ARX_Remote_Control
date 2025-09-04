@@ -22,11 +22,11 @@ global data_dict, sub_step, step, Max_step, Max_episode, dataset_path,episode_en
 step = 0
 sub_step = 0
 episode_idx = 0
-Max_step = 200 #1000
-Max_episode = 10
+Max_step = 400 #1000
+Max_episode = 8
 # directory_path = f'/media/dc/CLEAR/xgxy/dataset20241213' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
 
-directory_path = f'/home/arxpro/ARX_Remote_Control/data/5_18' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
+directory_path = f'/home/arxpro/ARX_Remote_Control/data/9_2_lemon_plate_2' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
 extension = '.zarr' 
 dataset_path = f'{directory_path}.zarr'
 data_dict = {
@@ -38,10 +38,10 @@ data_dict = {
         '/observations/images/right' : [],
         '/observations/depth' : [],
         }
-episode_ends_array,mid_image_array,right_image_array,depth_array,qpos_array,action_array,eef_qpos_array = [],[],[],[],[],[]
+episode_ends_array,mid_image_array,right_image_array,depth_array,qpos_array,action_array,eef_qpos_array = [],[],[],[],[],[],[]
 
 def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
-    global data_dict, step, Max_step,Max_episode, dataset_path
+    global data_dict, step, Max_step,Max_episode, dataset_path, episode_ends_array,mid_image_array,right_image_array,depth_array,qpos_array,action_array,eef_qpos_array,sub_step,episode_idx
     print(f"DEBUG:Enter Callback!")
     save=True
     bridge = CvBridge()
@@ -72,12 +72,12 @@ def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
     canvas[:, 640:1280, :] = image_right
 
     # 在一个窗口中显示排列后的图像
-    cv2.imshow('Multi Camera Viewer', canvas)
+    # cv2.imshow('Multi Camera Viewer', canvas)
   
-    cv2.waitKey(1)
+    # cv2.waitKey(1)
 
     sub_step = sub_step + 1
-    print(sub_step)
+    print(f"Step: {sub_step}")
     if sub_step >= Max_step and save:
         print(f'Episode {episode_idx+1} end__________________________________')
         step += sub_step
@@ -91,6 +91,9 @@ def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
         data_dict["/observations/images/right"].extend(copy.deepcopy(right_image_array))
         data_dict["/observations/depth"].extend(copy.deepcopy(depth_array))
         mid_image_array,right_image_array,depth_array,qpos_array,action_array,eef_qpos_array = [],[],[],[],[],[]
+        print("Rest for 10 seconds")
+        rospy.sleep(8)
+        print("Wake up")
 
     if episode_idx >= Max_episode and save:
         # 保存数据到zarr文件
@@ -129,8 +132,7 @@ def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
         zarr_data.create_dataset('qpos', data=data_dict['/qpos'], chunks=qpos_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
         zarr_data.create_dataset('eef_qpos', data=data_dict['/eef_qpos'], chunks=eef_qpos_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
         zarr_data.create_dataset('action', data=data_dict['/action'], chunks=action_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
-        zarr_meta.create_dataset('episode_ends', data=data_dict['/episode_ends'], dtype='int64', overwrite=True, compressor=compressor)
-        
+        zarr_meta.create_dataset('episode_ends',data=data_dict['/episode_ends'],dtype='int64',overwrite=True,compressor=compressor)
         # 打印数据信息
         cprint(f'-'*50, 'cyan')
         cprint(f'mid img shape: {data_dict["/observations/images/mid"].shape}, range: [{np.min(data_dict["/observations/images/mid"])}, {np.max(data_dict["/observations/images/mid"])}]', 'green')

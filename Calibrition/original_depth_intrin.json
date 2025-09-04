@@ -1,0 +1,15 @@
+{
+    "sensor_type": "Intel D435i",
+    "calibration_date": "2025-5-18",
+    "resolution": {
+        "width": 640,
+        "height": 480
+    },
+    "intrinsic": {
+        "fx": 385.98,
+        "fy": 385.98,
+        "cx": 323.75,
+        "cy": 238.28
+    },
+    "distortion": [0.0, 0.0, 0.0, 0.0, 0.0]
+}

@@ -33,7 +33,7 @@ def main():
     # 创建深度图像发布者
     depth_pub = rospy.Publisher('/mid_depth_camera', Image, queue_size=10)
 
-    rate = rospy.Rate(10)  # 发布频率10Hz
+    # rate = rospy.Rate(10)  # 发布频率10Hz
     while not rospy.is_shutdown():
         frames = Mid_pipeline.wait_for_frames()
         depth_frame = frames.get_depth_frame()
@@ -49,7 +49,7 @@ def main():
         depth_msg.header.stamp = rospy.Time.now()
         depth_pub.publish(depth_msg)
         
-        rate.sleep()
+        # rate.sleep()
 
     Mid_pipeline.stop()
 

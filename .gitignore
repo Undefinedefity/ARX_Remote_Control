@@ -15,3 +15,9 @@ master2/devel/
 master2/.catkin_workspace
 *.mp4
 *.hdf5
+*.png
+data/
+calibration_images/
+calibration_imagess/
+calibrition1/
+Calibtaion

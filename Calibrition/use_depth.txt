@@ -1,0 +1,9 @@
+命令行进入环境
+conda activate realsense_env
+进入文件夹
+/home/arxpro/ARX_Remote_Control/Calibrition
+运行深度图像获取
+python3 depth_get.py 
+运行后按“s”可以保存在Calibrition/depth_images，按“esc”退出程序
+代码是/home/arxpro/ARX_Remote_Control/Calibrition/depth_get.py 
+
