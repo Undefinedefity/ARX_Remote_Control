@@ -23,10 +23,10 @@ step = 0
 sub_step = 0
 episode_idx = 0
 Max_step = 400 #1000
-Max_episode = 8
+Max_episode = 40
 # directory_path = f'/media/dc/CLEAR/xgxy/dataset20241213' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
 
-directory_path = f'/home/arxpro/ARX_Remote_Control/data/9_2_lemon_plate_2' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
+directory_path = f'/home/arxpro/ARX_Remote_Control/data/9_3_lemon_plate_2' # f'/media/dc/ESD-USB/1120-remote-data'# f'/media/dc/HP2024/data/SCIL/Task4_long_horizon'
 extension = '.zarr' 
 dataset_path = f'{directory_path}.zarr'
 data_dict = {
@@ -91,7 +91,7 @@ def callback(JointCTR2,JointInfo2,f2p,image_mid,image_right,depth):
         data_dict["/observations/images/right"].extend(copy.deepcopy(right_image_array))
         data_dict["/observations/depth"].extend(copy.deepcopy(depth_array))
         mid_image_array,right_image_array,depth_array,qpos_array,action_array,eef_qpos_array = [],[],[],[],[],[]
-        print("Rest for 10 seconds")
+        print("Rest for 8 seconds")
         rospy.sleep(8)
         print("Wake up")
 

@@ -7,11 +7,11 @@ from tqdm import tqdm
 from Cloud_Process import boundary
 
 # 配置参数
-ZARR_PATH = "/home/arxpro/ARX_Remote_Control/data/9_2_lemon_plate_2.zarr/data/pcd"
-OUTPUT_VIDEO = "/home/arxpro/ARX_Remote_Control/data/9_2_lemon_plate_2.zarr/data/point_cloud_video.mp4"
+ZARR_PATH = "/home/arxpro/ARX_Remote_Control/data/9_3_lemon_plate_2.zarr/data"
+OUTPUT_VIDEO = "/home/arxpro/ARX_Remote_Control/data/9_3_lemon_plate_2.zarr/data/point_cloud_video.mp4"
 FRAME_RATE = 30  # 视频帧率
 START_FRAME = 0
-END_FRAME = 4000  # 结束帧索引
+END_FRAME = 15999  # 结束帧索引
 TEMP_DIR = "/home/arxpro/temp_frames"  # 临时保存图像的目录
 
 # 创建工作空间边界框
@@ -29,7 +29,7 @@ coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.05, origi
 
 # 加载Zarr数据
 zarr_root = zarr.open(ZARR_PATH, mode='r')
-point_clouds = zarr_root['pointcloud']  # 形状 [N, 1024, 6]
+point_clouds = zarr_root['point_cloud']  # 形状 [N, 1024, 6]
 total_frames = min(END_FRAME - START_FRAME + 1, len(point_clouds))
 
 # 创建临时目录

@@ -29,7 +29,7 @@ def generate_pcd_zarr(
     output_zarr_path: str,
     chunk_shape: tuple = (50,1024, 3),#1024
     compressor: Optional[Blosc] = None,
-    dataset_name: str = "pointcloud"  # 修正为小写保持一致性
+    dataset_name: str = "point_cloud"  # 修正为小写保持一致性
 ) -> None:
     """
     将点云保存到 Zarr 文件的指定数据集
@@ -79,9 +79,9 @@ if __name__ == "__main__":
         
         # 验证输出
         grp = zarr.open("test_output.zarr")
-        assert "pointcloud" in grp, "数据集不存在"
-        assert grp["pointcloud"].shape == (1000, 3), "形状不匹配"
-        assert np.allclose(grp["pointcloud"][:], test_pcd), "数据不一致"
+        assert "point_cloud" in grp, "数据集不存在"
+        assert grp["point_cloud"].shape == (1000, 3), "形状不匹配"
+        assert np.allclose(grp["point_cloud"][:], test_pcd), "数据不一致"
         
         print("[generate_pcd_zarr 测试] 全部通过")
         

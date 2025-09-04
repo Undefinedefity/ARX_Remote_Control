@@ -11,8 +11,13 @@ from typing import List, Tuple, Optional
 import time
 
 # 1. 初始化参数
-zarr_path = "/home/arxpro/ARX_Remote_Control/data/9_2_lemon_plate_2.zarr/data"
-output_zarr_path = "/home/arxpro/ARX_Remote_Control/data/9_2_lemon_plate_2.zarr/data/pcd"
+# 输入路径
+zarr_path = "/home/arxpro/ARX_Remote_Control/data/9_3_lemon_plate_2.zarr/data"
+# 输出路径：同级新建 pointcloud 文件夹
+input_dir = os.path.dirname(zarr_path)
+output_dir = os.path.join(os.path.dirname(input_dir), "point_cloud")
+os.makedirs(output_dir, exist_ok=True)
+output_zarr_path = os.path.join(output_dir, os.path.basename(input_dir))
 
 
 # 2. 读取深度数据（添加详细检查）
@@ -35,8 +40,8 @@ valid_frames = 0
 
 # switch a method for looping:
 # start, end = 0, depth_from_robot.shape[0]-1 # 想要的范围
-start, end = 0, 3999 # 想要的范围
-selected_frames = depth_from_robot[start : end+1]  # 切片获取980-984（共5帧）
+start, end = 0, 15999 # 想要的范围
+selected_frames = depth_from_robot[start : end+1] 
 
 # 在循环开始前初始化计时变量
 total_time = 0

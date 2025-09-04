@@ -84,8 +84,8 @@ def zarr_to_video(zarr_path, output_video, fps=30, duration_sec=10):
 
 if __name__ == "__main__":
     # 示例用法
-    zarr_path = "/home/arxpro/ARX_Remote_Control/data/9_2_lemon_plate.zarr/data/img_mid"
-    output_video = "/home/arxpro/ARX_Remote_Control/data/9_2_lemon_plate.zarr/data/output_video.mp4"
-    
+    zarr_path = "/home/arxpro/ARX_Remote_Control/data/9_3_lemon_plate_1.zarr/data/img_mid"
+    output_video = "/home/arxpro/ARX_Remote_Control/data/9_3_lemon_plate_1.zarr/data/rbg_vid.mp4"
+
     # 设置10秒时长
     zarr_to_video(zarr_path, output_video, fps=10, duration_sec=15)
